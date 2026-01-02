@@ -1,12 +1,31 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Trash2, Download, Info, FileText, Globe } from 'lucide-react';
+import {
+  Settings,
+  Bell,
+  Sliders,
+  AppWindow,
+  Database,
+  Shield,
+  Users,
+  User,
+  X,
+  ChevronRight,
+  Moon,
+  Sun,
+  Monitor,
+  Globe,
+  Volume2,
+  Play,
+  Trash2,
+  Download,
+  FileText,
+  Key,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -15,10 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { OPENAI_MODELS, setOpenAIModel, getSelectedOpenAIModel } from '@/services/openai-api';
 import { TurkishFlag } from '@/components/TurkishFlag';
+import { BilgeLogo } from '@/components/BilgeLogo';
 
 interface SettingsModalProps {
   open: boolean;
@@ -28,6 +49,18 @@ interface SettingsModalProps {
   onExportPDF?: () => void;
 }
 
+type SettingsTab = 'genel' | 'bildirimler' | 'kisiselleştirme' | 'uygulamalar' | 'veri' | 'guvenlik' | 'hesap';
+
+const menuItems: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
+  { id: 'genel', label: 'Genel', icon: Settings },
+  { id: 'bildirimler', label: 'Bildirimler', icon: Bell },
+  { id: 'kisiselleştirme', label: 'Kişiselleştirme', icon: Sliders },
+  { id: 'uygulamalar', label: 'Uygulamalar', icon: AppWindow },
+  { id: 'veri', label: 'Veri kontrolleri', icon: Database },
+  { id: 'guvenlik', label: 'Güvenlik', icon: Shield },
+  { id: 'hesap', label: 'Hesap', icon: User },
+];
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onClose,
@@ -36,13 +69,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportPDF,
 }) => {
   const { theme, setTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState<SettingsTab>('genel');
   const [selectedModel, setSelectedModelState] = useState(getSelectedOpenAIModel());
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('bilge-language') || 'tr';
-  });
+  const [language, setLanguage] = useState(() => localStorage.getItem('bilge-language') || 'tr');
+  const [spokenLanguage, setSpokenLanguage] = useState('tr');
+  const [selectedVoice, setSelectedVoice] = useState('Ember');
+  const [separateVoiceMode, setSeparateVoiceMode] = useState(false);
+  const [notifications, setNotifications] = useState(true);
+  const [soundEffects, setSoundEffects] = useState(true);
 
   const handleClearAll = () => {
-    if (confirm('Tüm sohbetleri silmek istediğinizden emin misiniz?')) {
+    if (confirm('Tüm sohbetleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
       onClearAll();
       onClose();
     }
@@ -58,128 +95,491 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     localStorage.setItem('bilge-language', value);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Ayarlar</DialogTitle>
-          <DialogDescription>
-            Bilge uygulamasını özelleştirin
-          </DialogDescription>
-        </DialogHeader>
+  const handleThemeChange = (value: string) => {
+    if (value === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      setTheme(systemTheme);
+    } else {
+      setTheme(value as 'light' | 'dark');
+    }
+    localStorage.setItem('bilge-theme-preference', value);
+  };
 
-        <div className="space-y-6 py-4">
-          {/* Model Selection */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Yapay Zeka Modeli</label>
-            <Select value={selectedModel} onValueChange={handleModelChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Model seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(OPENAI_MODELS).map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{model.name}</span>
-                      <span className="text-xs text-muted-foreground">{model.description}</span>
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'genel':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Genel</h2>
+
+            {/* Görünüm */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Görünüm</p>
+              </div>
+              <Select
+                value={localStorage.getItem('bilge-theme-preference') || 'system'}
+                onValueChange={handleThemeChange}
+              >
+                <SelectTrigger className="w-32 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">
+                    <div className="flex items-center gap-2">
+                      <Monitor className="h-4 w-4" />
+                      Sistem
                     </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  <SelectItem value="light">
+                    <div className="flex items-center gap-2">
+                      <Sun className="h-4 w-4" />
+                      Açık
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dark">
+                    <div className="flex items-center gap-2">
+                      <Moon className="h-4 w-4" />
+                      Koyu
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Language */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Dil
-            </label>
-            <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Dil seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tr">Türkçe</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Vurgu rengi */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Vurgu rengi</p>
+              </div>
+              <Select defaultValue="default">
+                <SelectTrigger className="w-32 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-slate-600" />
+                      Varsayılan
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="blue">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      Mavi
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="green">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      Yeşil
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="red">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500" />
+                      Kırmızı
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Theme */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Görünüm</label>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className={cn(
-                  "justify-start gap-2",
-                  theme === 'light' && "border-primary bg-primary/5"
-                )}
-                onClick={() => setTheme('light')}
-              >
-                <Sun className="h-4 w-4" />
-                Açık
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "justify-start gap-2",
-                  theme === 'dark' && "border-primary bg-primary/5"
-                )}
-                onClick={() => setTheme('dark')}
-              >
-                <Moon className="h-4 w-4" />
-                Koyu
-              </Button>
+            {/* Dil */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Dil</p>
+              </div>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-40 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Otomatik algıla</SelectItem>
+                  <SelectItem value="tr">Türkçe</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Konuşulan dil */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Konuşulan dil</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  En iyi sonucu almak için ana dilini seç. Listede görünmüyorsa da otomatik algılama yoluyla desteklenebilir.
+                </p>
+              </div>
+              <Select value={spokenLanguage} onValueChange={setSpokenLanguage}>
+                <SelectTrigger className="w-40 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Otomatik algıla</SelectItem>
+                  <SelectItem value="tr">Türkçe</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Ses */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Ses</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-9 gap-2">
+                  <Play className="h-3 w-3" />
+                  Oynat
+                </Button>
+                <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                  <SelectTrigger className="w-28 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ember">Ember</SelectItem>
+                    <SelectItem value="Cove">Cove</SelectItem>
+                    <SelectItem value="Maple">Maple</SelectItem>
+                    <SelectItem value="Breeze">Breeze</SelectItem>
+                    <SelectItem value="Juniper">Juniper</SelectItem>
+                    <SelectItem value="Sol">Sol</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Ayrı ses modu */}
+            <div className="flex items-center justify-between py-3">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium">Ayrı ses modu</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gerçek zamanlı metin deşifreleri ve görseller olmadan Bilge Ses'i ayrı bir tam ekranda tut.
+                </p>
+              </div>
+              <Switch
+                checked={separateVoiceMode}
+                onCheckedChange={setSeparateVoiceMode}
+              />
             </div>
           </div>
+        );
 
-          {/* Data */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Veri Yönetimi</label>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={onExport}
-              >
-                <Download className="h-4 w-4" />
-                Sohbetleri Dışa Aktar (JSON)
+      case 'bildirimler':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Bildirimler</h2>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Bildirimler</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Yeni mesajlar ve güncellemeler için bildirim al
+                </p>
+              </div>
+              <Switch
+                checked={notifications}
+                onCheckedChange={setNotifications}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Ses efektleri</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Mesaj gönderme ve alma seslerini çal
+                </p>
+              </div>
+              <Switch
+                checked={soundEffects}
+                onCheckedChange={setSoundEffects}
+              />
+            </div>
+          </div>
+        );
+
+      case 'kisiselleştirme':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Kişiselleştirme</h2>
+
+            {/* Model Selection */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Yapay Zeka Modeli</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Yanıtlar için kullanılacak AI modelini seç
+                </p>
+              </div>
+              <Select value={selectedModel} onValueChange={handleModelChange}>
+                <SelectTrigger className="w-48 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(OPENAI_MODELS).map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-3 w-3" />
+                        {model.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Özel talimatlar</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bilge'nin yanıtlarını kişiselleştir
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-9">
+                <ChevronRight className="h-4 w-4" />
               </Button>
-              {onExportPDF && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2"
-                  onClick={onExportPDF}
-                >
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Hafıza</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bilge'nin seni hatırlamasına izin ver
+                </p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+          </div>
+        );
+
+      case 'uygulamalar':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Uygulamalar</h2>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Bağlı uygulamalar</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bilge ile entegre çalışan uygulamaları yönet
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-9">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/50 text-center">
+              <AppWindow className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">Henüz bağlı uygulama yok</p>
+            </div>
+          </div>
+        );
+
+      case 'veri':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Veri kontrolleri</h2>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Sohbet geçmişi</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Tüm sohbetlerini dışa aktar
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="h-9 gap-2" onClick={onExport}>
+                <Download className="h-4 w-4" />
+                JSON
+              </Button>
+            </div>
+
+            {onExportPDF && (
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="text-sm font-medium">PDF olarak kaydet</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Mevcut sohbeti PDF formatında indir
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="h-9 gap-2" onClick={onExportPDF}>
                   <FileText className="h-4 w-4" />
-                  Mevcut Sohbeti PDF Olarak Kaydet
+                  PDF
                 </Button>
-              )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium text-destructive">Tüm sohbetleri sil</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bu işlem geri alınamaz
+                </p>
+              </div>
               <Button
                 variant="outline"
-                className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                size="sm"
+                className="h-9 gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleClearAll}
               >
                 <Trash2 className="h-4 w-4" />
-                Tüm Sohbetleri Sil
+                Sil
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Model eğitimini iyileştir</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Sohbetlerinin modeli iyileştirmek için kullanılmasına izin ver
+                </p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+          </div>
+        );
+
+      case 'guvenlik':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Güvenlik</h2>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">API Anahtarı</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Kendi API anahtarınızı kullanın
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Key className="h-4 w-4" />
+                Yapılandır
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">İki faktörlü kimlik doğrulama</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Hesabını ek güvenlik katmanıyla koru
+                </p>
+              </div>
+              <Switch />
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Aktif oturumlar</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Hesabınızın bağlı olduğu cihazları yönetin
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-9">
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
+        );
 
-          {/* About */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Hakkında</label>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-red-50 to-slate-50 dark:from-red-950/30 dark:to-slate-900/50 border border-red-100 dark:border-red-900/30">
-              <TurkishFlag size="md" />
-              <div className="text-sm">
-                <p className="font-semibold text-foreground mb-1">Bilge v1.0</p>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  Türkiye'nin ilk yerli yapay zeka asistanı. Türk mühendisler tarafından geliştirildi.
-                </p>
+      case 'hesap':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Hesap</h2>
+
+            {/* User info */}
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30">
+              <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <User className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="font-medium">Kullanıcı</p>
+                <p className="text-sm text-muted-foreground">Kişisel hesap</p>
               </div>
             </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">E-posta</p>
+                <p className="text-xs text-muted-foreground mt-0.5">kullanici@email.com</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-9">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">Abonelik</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Ücretsiz plan</p>
+              </div>
+              <Button variant="outline" size="sm" className="h-9">
+                Yükselt
+              </Button>
+            </div>
+
+            {/* About Bilge */}
+            <div className="mt-8 pt-6 border-t border-border">
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                <BilgeLogo size="sm" />
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold">Bilge v1.0</p>
+                    <TurkishFlag size="xs" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Türkiye'nin ilk yerli yapay zeka asistanı
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl h-[600px] p-0 gap-0 overflow-hidden">
+        <div className="flex h-full">
+          {/* Sidebar */}
+          <div className="w-56 bg-muted/30 border-r border-border flex flex-col">
+            {/* Close button */}
+            <div className="p-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Menu items */}
+            <nav className="flex-1 px-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-0.5",
+                    activeTab === item.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 p-6 overflow-y-auto scrollbar-thin">
+            {renderContent()}
           </div>
         </div>
       </DialogContent>

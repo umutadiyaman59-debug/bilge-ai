@@ -6,6 +6,7 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { ErrorBanner } from '@/components/chat/ErrorBanner';
 import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { SettingsModal } from '@/components/modals/SettingsModal';
+import { WavingFlagBadge } from '@/components/TurkishFlag';
 import { useChat } from '@/hooks/useChat';
 
 const Index = () => {
@@ -113,6 +114,9 @@ const Index = () => {
         onExport={exportConversations}
         onExportPDF={exportToPDF}
       />
+
+      {/* Dalgalanan Türk Bayrağı - Sağ Alt Köşe */}
+      <WavingFlagBadge position="bottom-right" />
     </div>
   );
 };

@@ -4,8 +4,8 @@
  * Uses OpenAI-compatible API format
  */
 
-// API key should be provided by user in settings
-const BUILTIN_API_KEY = '';
+// API key for development (set via environment variable for production)
+const BUILTIN_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 
 // Text-only message content
 export interface OpenAITextContent {
@@ -99,8 +99,9 @@ export class OpenAIAPIService {
     this.model = config.model || 'meta-llama/llama-4-scout-17b-16e-instruct';
     this.maxTokens = config.maxTokens || 4096;
     this.systemPrompt = config.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-    // Use local Vite proxy to avoid CORS issues
-    this.baseUrl = '/api/groq';
+    // Use /api/chat for production (Vercel), /api/groq for dev (Vite proxy)
+    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    this.baseUrl = isDev ? '/api/groq' : '/api';
   }
 
   /**
@@ -135,11 +136,14 @@ export class OpenAIAPIService {
       ...messages,
     ];
 
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const endpoint = isDev ? `${this.baseUrl}/chat/completions` : `${this.baseUrl}/chat`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        ...(isDev ? { 'Authorization': `Bearer ${this.apiKey}` } : {}),
       },
       body: JSON.stringify({
         model: this.model,
