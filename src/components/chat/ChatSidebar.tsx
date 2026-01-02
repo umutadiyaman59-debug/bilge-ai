@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { PenSquare, Search, MessageSquare, Trash2, Download, Settings, X, Moon, Sun, MoreHorizontal, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PenSquare, Search, MessageSquare, Trash2, Download, Settings, X, Moon, Sun, MoreHorizontal, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Conversation } from '@/types/chat';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -39,12 +41,23 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   isOpen,
   onClose,
 }) => {
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredConversations = conversations.filter(conv =>
     conv.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Get user display info
+  const userEmail = user?.email || 'Kullanici';
+  const userInitial = userEmail.charAt(0).toUpperCase();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <>
@@ -109,7 +122,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <div className="px-2 pb-2">
             {filteredConversations.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                {searchQuery ? 'Sonuç bulunamadı' : 'Henüz sohbet yok'}
+                {searchQuery ? 'Sonuc bulunamadi' : 'Henuz sohbet yok'}
               </p>
             ) : (
               <div className="space-y-0.5">
@@ -155,13 +168,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 className="w-full justify-start gap-3 h-12 px-3 text-sidebar-foreground hover:bg-sidebar-accent rounded-lg"
               >
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                  <span className="text-sm font-semibold text-white">{userInitial}</span>
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium truncate">Kullanıcı</p>
-                  <p className="text-xs text-muted-foreground">Kişisel hesap</p>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-sm font-medium truncate">{userEmail}</p>
+                  <p className="text-xs text-muted-foreground">Kisisel hesap</p>
                 </div>
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
@@ -175,16 +188,21 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 ) : (
                   <Moon className="h-4 w-4 mr-2" />
                 )}
-                {theme === 'dark' ? 'Açık Mod' : 'Koyu Mod'}
+                {theme === 'dark' ? 'Acik Mod' : 'Koyu Mod'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onExport}>
                 <Download className="h-4 w-4 mr-2" />
-                Dışa Aktar
+                Disa Aktar
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onClearAll} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Tümünü Temizle
+                Tumunu Temizle
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <LogOut className="h-4 w-4 mr-2" />
+                Cikis Yap
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

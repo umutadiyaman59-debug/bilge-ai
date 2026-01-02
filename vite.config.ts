@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: ['localhost', '.trycloudflare.com', '.loca.lt'],
     proxy: {
       // Proxy Groq API requests to avoid CORS issues
       '/api/groq': {

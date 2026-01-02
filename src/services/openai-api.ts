@@ -71,21 +71,7 @@ export const OPENAI_MODELS = {
 } as const;
 
 // Default system prompt for Bilge - Turkish AI Assistant
-const DEFAULT_SYSTEM_PROMPT = `Sen Bilge'sin - Türkiye'nin ilk yerli yapay zeka asistanı.
-
-Görevin:
-- Kullanıcılara Türkçe olarak yardımcı olmak
-- Sorulara açık, anlaşılır ve kapsamlı cevaplar vermek
-- Profesyonel ama samimi bir dil kullanmak
-- Türk kültürüne ve diline uygun yanıtlar vermek
-
-Önemli kurallar:
-- Her zaman nazik ve yardımsever ol
-- Bilmediğin konularda dürüst ol
-- Zararlı, yasadışı veya etik olmayan içerik üretme
-- Kullanıcının dilini takip et (Türkçe veya İngilizce)
-
-Merhaba de ve yardımcı olmaya hazır olduğunu belirt.`;
+const DEFAULT_SYSTEM_PROMPT = `Sen Bilge'sin - Türkiye'nin yapay zeka asistanı. Kullanıcılara yardımcı ol.`;
 
 export class OpenAIAPIService {
   private apiKey: string;
@@ -99,9 +85,8 @@ export class OpenAIAPIService {
     this.model = config.model || 'meta-llama/llama-4-scout-17b-16e-instruct';
     this.maxTokens = config.maxTokens || 4096;
     this.systemPrompt = config.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-    // Use /api/chat for production (Vercel), /api/groq for dev (Vite proxy)
-    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-    this.baseUrl = isDev ? '/api/groq' : '/api';
+    // Use Vite proxy in development (works with tunnels too)
+    this.baseUrl = import.meta.env.DEV ? '/api/groq' : '/api';
   }
 
   /**
@@ -136,7 +121,7 @@ export class OpenAIAPIService {
       ...messages,
     ];
 
-    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const isDev = import.meta.env.DEV;
     const endpoint = isDev ? `${this.baseUrl}/chat/completions` : `${this.baseUrl}/chat`;
 
     const response = await fetch(endpoint, {

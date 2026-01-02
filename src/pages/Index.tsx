@@ -6,6 +6,8 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { ErrorBanner } from '@/components/chat/ErrorBanner';
 import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { SettingsModal } from '@/components/modals/SettingsModal';
+import { ShareModal } from '@/components/modals/ShareModal';
+import { InviteModal } from '@/components/modals/InviteModal';
 import { WavingFlagBadge } from '@/components/TurkishFlag';
 import { useChat } from '@/hooks/useChat';
 
@@ -13,6 +15,8 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -86,6 +90,9 @@ const Index = () => {
         <ChatHeader
           onMenuClick={() => setSidebarOpen(true)}
           onProfileClick={() => setShowSettings(true)}
+          onShareClick={() => setShowShare(true)}
+          onInviteClick={() => setShowInvite(true)}
+          hasActiveConversation={!!activeConversation && activeConversation.messages.length > 0}
         />
 
         {/* Error banner */}
@@ -113,6 +120,16 @@ const Index = () => {
         onClearAll={clearAllConversations}
         onExport={exportConversations}
         onExportPDF={exportToPDF}
+      />
+      <ShareModal
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        conversation={activeConversation}
+      />
+      <InviteModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        conversation={activeConversation}
       />
 
       {/* Dalgalanan Türk Bayrağı - Sağ Alt Köşe */}

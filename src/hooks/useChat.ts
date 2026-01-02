@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Message, Conversation, Attachment } from '@/types/chat';
 import { streamAIMessage, hasCurrentProviderAPIKey, AIMessage, getCurrentProviderInfo } from '@/services/ai-service';
 
@@ -9,24 +9,12 @@ const generateTitle = (content: string) => {
   return words.length > 30 ? words.substring(0, 30) + '...' : words;
 };
 
-// Demo mode responses when no API key is provided
-const demoResponses = [
-  "Merhaba! Ben Bilge, Türkiye'nin ilk yerli yapay zeka asistanıyım. Size nasıl yardımcı olabilirim?",
-  "Bu demo modunda çalışıyorum. Tam deneyim için API anahtarınızı Ayarlar bölümünden ekleyebilirsiniz.",
-  "Anlıyorum. Gerçek yanıtlar almak için lütfen API anahtarınızı yapılandırın.",
-  "Demo modunda birkaç örnek yanıt gösteriyorum. Ayarlar > API Anahtarı bölümünden gerçek AI'ya bağlanabilirsiniz.",
-  "Türkçe veya İngilizce sorularınızı yanıtlayabilirim. API bağlantısı için Ayarlar menüsünü kullanın.",
-];
-
+// Demo mode response
 const simulateResponse = async (
   message: string,
   onChunk: (chunk: string) => void
 ): Promise<string> => {
-  const baseResponse = demoResponses[Math.floor(Math.random() * demoResponses.length)];
-  const response = message.toLowerCase().includes('merhaba')
-    ? "Merhaba! Ben Bilge, Türkiye'nin yapay zeka asistanı. 🇹🇷 Size yardımcı olmaktan mutluluk duyarım! Bu demo modunda çalışıyorum. Gerçek AI yanıtları için Ayarlar bölümünden Claude veya GPT-5 API anahtarınızı ekleyin."
-    : baseResponse;
-
+  const response = "Merhaba! Ben Bilge. Size nasıl yardımcı olabilirim?";
   const words = response.split(' ');
   let accumulated = '';
 
@@ -61,10 +49,21 @@ export const useChat = () => {
     }
     return [];
   });
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
+    return localStorage.getItem('bilge-active-conversation') || null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Persist activeConversationId to localStorage
+  useEffect(() => {
+    if (activeConversationId) {
+      localStorage.setItem('bilge-active-conversation', activeConversationId);
+    } else {
+      localStorage.removeItem('bilge-active-conversation');
+    }
+  }, [activeConversationId]);
 
   const saveConversations = useCallback((convs: Conversation[]) => {
     try {

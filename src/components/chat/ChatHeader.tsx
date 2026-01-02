@@ -8,13 +8,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ChatHeaderProps {
   onMenuClick: () => void;
   onProfileClick: () => void;
+  onShareClick?: () => void;
+  onInviteClick?: () => void;
+  hasActiveConversation?: boolean;
 }
 
-export const ChatHeader: React.FC<ChatHeaderProps> = ({ onMenuClick, onProfileClick }) => {
+export const ChatHeader: React.FC<ChatHeaderProps> = ({
+  onMenuClick,
+  onProfileClick,
+  onShareClick,
+  onInviteClick,
+  hasActiveConversation = false,
+}) => {
   return (
     <header className="h-12 bg-background flex items-center justify-between px-3 sticky top-0 z-10">
       {/* Left side - Menu (mobile) + Bilge dropdown */}
@@ -54,22 +68,40 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onMenuClick, onProfileCl
 
       {/* Right side - Share & Add person (ChatGPT style) */}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 px-3 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex"
-        >
-          <Share className="h-4 w-4" />
-          <span className="text-sm">Paylaş</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 px-3 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span className="text-sm">Kişi ekle</span>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex disabled:opacity-50"
+              onClick={onShareClick}
+              disabled={!hasActiveConversation}
+            >
+              <Share className="h-4 w-4" />
+              <span className="text-sm">Paylaş</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {hasActiveConversation ? 'Sohbeti paylaş' : 'Paylaşmak için bir sohbet başlatın'}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex disabled:opacity-50"
+              onClick={onInviteClick}
+              disabled={!hasActiveConversation}
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="text-sm">Kişi ekle</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {hasActiveConversation ? 'Sohbete kişi davet et' : 'Davet için bir sohbet başlatın'}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </header>
   );

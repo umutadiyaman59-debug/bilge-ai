@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Settings,
   Bell,
@@ -21,6 +22,7 @@ import {
   FileText,
   Key,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { OPENAI_MODELS, setOpenAIModel, getSelectedOpenAIModel } from '@/services/openai-api';
 import { TurkishFlag } from '@/components/TurkishFlag';
@@ -68,7 +71,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExport,
   onExportPDF,
 }) => {
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('genel');
   const [selectedModel, setSelectedModelState] = useState(getSelectedOpenAIModel());
   const [language, setLanguage] = useState(() => localStorage.getItem('bilge-language') || 'tr');
@@ -77,6 +82,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [separateVoiceMode, setSeparateVoiceMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
+
+  // User info
+  const userEmail = user?.email || 'Kullanici';
+  const userInitial = userEmail.charAt(0).toUpperCase();
+  const createdAt = user?.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR') : '';
+
+  const handleSignOut = async () => {
+    await signOut();
+    onClose();
+    navigate('/');
+  };
 
   const handleClearAll = () => {
     if (confirm('Tüm sohbetleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
@@ -488,31 +504,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* User info */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30">
               <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <User className="h-7 w-7 text-white" />
+                <span className="text-xl font-semibold text-white">{userInitial}</span>
               </div>
               <div>
-                <p className="font-medium">Kullanıcı</p>
-                <p className="text-sm text-muted-foreground">Kişisel hesap</p>
+                <p className="font-medium">{userEmail}</p>
+                <p className="text-sm text-muted-foreground">Kisisel hesap</p>
               </div>
             </div>
 
             <div className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium">E-posta</p>
-                <p className="text-xs text-muted-foreground mt-0.5">kullanici@email.com</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{userEmail}</p>
               </div>
               <Button variant="ghost" size="sm" className="h-9">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
+            {createdAt && (
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="text-sm font-medium">Kayit Tarihi</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{createdAt}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium">Abonelik</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Ücretsiz plan</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Ucretsiz plan</p>
               </div>
               <Button variant="outline" size="sm" className="h-9">
-                Yükselt
+                Yukselt
+              </Button>
+            </div>
+
+            {/* Sign Out */}
+            <div className="pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                className="w-full h-10 gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+                Cikis Yap
               </Button>
             </div>
 
@@ -526,7 +563,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <TurkishFlag size="xs" />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Türkiye'nin ilk yerli yapay zeka asistanı
+                    Turkiye'nin ilk yerli yapay zeka asistani
                   </p>
                 </div>
               </div>
